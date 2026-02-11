@@ -25,9 +25,9 @@ public partial class HomepageProductsViewComponent : NopViewComponent
         _storeMappingService = storeMappingService;
     }
 
-    public async Task<IViewComponentResult> InvokeAsync(int? productThumbPictureSize)
+    public async Task<IViewComponentResult> InvokeAsync(int? productThumbPictureSize, int pageNumber = 1, int pageSize = 12)
     {
-        var products = await (await _productService.GetAllProductsDisplayedOnHomepageAsync())
+        var allProducts = await (await _productService.GetAllProductsDisplayedOnHomepageAsync())
             //ACL and store mapping
             .WhereAwait(async p => await _aclService.AuthorizeAsync(p) && await _storeMappingService.AuthorizeAsync(p))
             //availability dates
@@ -35,10 +35,22 @@ public partial class HomepageProductsViewComponent : NopViewComponent
             //visible individually
             .Where(p => p.VisibleIndividually).ToListAsync();
 
-        if (!products.Any())
+        var totalCount = allProducts.Count;
+        
+        if (totalCount == 0)
             return Content("");
 
+        var products = allProducts
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
         var model = (await _productModelFactory.PrepareProductOverviewModelsAsync(products, true, true, productThumbPictureSize)).ToList();
+        
+        ViewBag.PageNumber = pageNumber;
+        ViewBag.PageSize = pageSize;
+        ViewBag.TotalCount = totalCount;
+        ViewBag.HasMorePages = (pageNumber * pageSize) < totalCount;
 
         return await ViewAsync(model);
     }

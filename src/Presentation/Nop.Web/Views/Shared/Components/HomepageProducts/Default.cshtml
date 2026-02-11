@@ -1,11 +1,19 @@
-п»ї@model IList<ProductOverviewModel>
-@if (Model.Count > 0)
+@model IList<ProductOverviewModel>
+@{
+    var pageNumber = (int)ViewBag.PageNumber;
+    var pageSize = (int)ViewBag.PageSize;
+    var totalCount = (int)ViewBag.TotalCount;
+    var hasMorePages = (bool)ViewBag.HasMorePages;
+    var isFirstPage = pageNumber == 1;
+}
+
+@if (isFirstPage)
 {
     <section class="product-grid home-page-product-grid">
         <h2 class="title">
             @T("Homepage.Products")
         </h2>
-        <div class="item-grid">
+        <div class="item-grid" id="homepage-products-grid">
             @foreach (var item in Model)
             {
                 <div class="item-box">
@@ -13,5 +21,74 @@
                 </div>
             }
         </div>
+        
+        @if (hasMorePages)
+        {
+            <div class="load-more-container" style="text-align: center; margin: 20px 0;">
+                <button id="load-more-btn" class="button-1" type="button">
+                    @T("Common.LoadMore") (@pageSize из @totalCount)
+                </button>
+            </div>
+            
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const loadMoreBtn = document.getElementById('load-more-btn');
+                    const productsGrid = document.getElementById('homepage-products-grid');
+                    let currentPage = @pageNumber;
+                    const pageSize = @pageSize;
+                    const totalCount = @totalCount;
+                    
+                    loadMoreBtn.addEventListener('click', function() {
+                        currentPage++;
+                        loadMoreBtn.disabled = true;
+                        loadMoreBtn.textContent = 'Загрузка...';
+                        
+                        fetch('/Home/GetMoreHomepageProducts', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ 
+                                pageNumber: currentPage,
+                                pageSize: pageSize 
+                            })
+                        })
+                        .then(response => response.text())
+                        .then(html => {
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = html;
+                            const newProducts = tempDiv.querySelectorAll('.item-box');
+                            
+                            newProducts.forEach(product => {
+                                productsGrid.appendChild(product);
+                            });
+                            
+                            const currentlyShown = currentPage * pageSize;
+                            
+                            if (currentlyShown >= totalCount) {
+                                loadMoreBtn.style.display = 'none';
+                            } else {
+                                loadMoreBtn.disabled = false;
+                                loadMoreBtn.textContent = '@T("Common.LoadMore") (' + currentlyShown + ' из ' + totalCount + ')';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            loadMoreBtn.disabled = false;
+                            loadMoreBtn.textContent = 'Ошибка. Повторить';
+                        });
+                    });
+                });
+            </script>
+        }
     </section>
+}
+else
+{
+    @foreach (var item in Model)
+    {
+        <div class="item-box">
+            @await Html.PartialAsync("_ProductBox", item)
+        </div>
+    }
 }
