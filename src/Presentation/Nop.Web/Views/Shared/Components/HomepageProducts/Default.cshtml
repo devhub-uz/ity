@@ -26,8 +26,8 @@
         {
             <div class="load-more-container" style="text-align: center; margin: 20px 0;">
                 <button id="load-more-btn" class="button-1" type="button">
-                    <span class="load-more-text">Показать еще</span> 
-                    <span class="load-more-count">(<span id="shown-count">@pageSize</span> из @totalCount)</span>
+                    <span class="load-more-text">@T("Common.LoadMore")</span> 
+                    <span class="load-more-count">(<span id="shown-count">@pageSize</span> @T("Common.Of") @totalCount)</span>
                 </button>
             </div>
             
@@ -39,11 +39,15 @@
                     let currentPage = @pageNumber;
                     const pageSize = @pageSize;
                     const totalCount = @totalCount;
+                    const loadMoreText = '@T("Common.LoadMore")';
+                    const loadingText = '@T("Common.Loading")';
+                    const retryText = '@T("Common.Error"). @T("Common.Retry")';
+                    const ofText = '@T("Common.Of")';
                     
                     loadMoreBtn.addEventListener('click', function() {
                         currentPage++;
                         loadMoreBtn.disabled = true;
-                        loadMoreBtn.querySelector('.load-more-text').textContent = 'Загрузка...';
+                        loadMoreBtn.querySelector('.load-more-text').textContent = loadingText;
                         loadMoreBtn.querySelector('.load-more-count').style.display = 'none';
                         
                         fetch('/Home/GetMoreHomepageProducts', {
@@ -72,7 +76,7 @@
                                 loadMoreBtn.style.display = 'none';
                             } else {
                                 loadMoreBtn.disabled = false;
-                                loadMoreBtn.querySelector('.load-more-text').textContent = 'Показать еще';
+                                loadMoreBtn.querySelector('.load-more-text').textContent = loadMoreText;
                                 loadMoreBtn.querySelector('.load-more-count').style.display = '';
                                 shownCountEl.textContent = currentlyShown;
                             }
@@ -80,7 +84,7 @@
                         .catch(error => {
                             console.error('Error:', error);
                             loadMoreBtn.disabled = false;
-                            loadMoreBtn.querySelector('.load-more-text').textContent = 'Ошибка. Повторить';
+                            loadMoreBtn.querySelector('.load-more-text').textContent = retryText;
                             loadMoreBtn.querySelector('.load-more-count').style.display = '';
                         });
                     });
