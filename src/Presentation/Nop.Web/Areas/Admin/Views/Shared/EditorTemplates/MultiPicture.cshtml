@@ -9,7 +9,7 @@
     var endpoint = ViewData["Endpoint"];
     var tableSelector = ViewData["TableSelector"];
 
-    var allowedMimeTypes = new List<string> { MimeTypes.ImagePng, MimeTypes.ImageBmp, MimeTypes.ImageGif, MimeTypes.ImageJpeg, MimeTypes.ImagePJpeg, MimeTypes.ImageTiff, MimeTypes.ImageWebp };
+    var allowedMimeTypes = new List<string> { MimeTypes.ImagePng, MimeTypes.ImageBmp, MimeTypes.ImageGif, MimeTypes.ImageJpeg, MimeTypes.ImagePJpeg, MimeTypes.ImageTiff, MimeTypes.ImageWebp, MimeTypes.ImageAvif };
 
     if (mediaSettings.AllowSvgUploads)
         allowedMimeTypes.Add(MimeTypes.ImageSvg);

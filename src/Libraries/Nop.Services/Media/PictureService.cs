@@ -388,6 +388,7 @@ public partial class PictureService : IPictureService
             "tiff" => "tiff",
             "x-icon" => "ico",
             "webp" => "webp",
+            "avif" => "avif",
             "svg+xml" => "svg",
             _ => "",
         };
@@ -565,6 +566,32 @@ public partial class PictureService : IPictureService
             //and does not decrease performance significantly, because the code is blocked only for the specific file.
             //you should be very careful, mutexes cannot be used in with the await operation
             //we can't use semaphore here, because it produces PlatformNotSupportedException exception on UNIX based systems
+            using var mutex = new Mutex(false, thumbFileName);
+            mutex.WaitOne();
+            try
+            {
+                _thumbService.SaveThumbAsync(thumbFilePath, thumbFileName, picture.MimeType, pictureBinary).Wait();
+            }
+            finally
+            {
+                mutex.ReleaseMutex();
+            }
+        }
+        else if (picture.MimeType == MimeTypes.ImageAvif)
+        {
+            thumbFileName = !string.IsNullOrEmpty(seoFileName)
+                ? $"{picture.Id:0000000}_{seoFileName}_{targetSize}.{lastPart}"
+                : $"{picture.Id:0000000}_{targetSize}.{lastPart}";
+
+            var thumbFilePath = await _thumbService.GetThumbLocalPathByFileNameAsync(thumbFileName);
+            if (await _thumbService.GeneratedThumbExistsAsync(thumbFilePath, thumbFileName))
+                return (await _thumbService.GetThumbUrlAsync(thumbFileName, storeLocation), picture);
+
+            pictureBinary ??= await LoadPictureBinaryAsync(picture);
+
+            if (pictureBinary == null)
+                return (await _thumbService.GetThumbUrlAsync(thumbFileName, storeLocation), picture);
+
             using var mutex = new Mutex(false, thumbFileName);
             mutex.WaitOne();
             try
@@ -815,6 +842,7 @@ public partial class PictureService : IPictureService
     {
         var imgExt = new List<string>
         {
+            ".avif",
             ".bmp",
             ".gif",
             ".webp",
@@ -1006,6 +1034,9 @@ public partial class PictureService : IPictureService
     {
         try
         {
+            if (mimeType == MimeTypes.ImageAvif)
+                return Task.FromResult(pictureBinary);
+
             SKBitmap image;
 
             if (_mediaSettings.AutoOrientImage)
@@ -1219,6 +1250,9 @@ public partial class PictureService : IPictureService
 
         switch (fileExtension.ToLower())
         {
+            case ".avif":
+                contentType = MimeTypes.ImageAvif;
+                break;
             case ".bmp":
                 contentType = MimeTypes.ImageBmp;
                 break;

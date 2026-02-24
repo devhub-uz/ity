@@ -70,6 +70,11 @@ public static class MimeTypes
     /// <summary>
     /// Type
     /// </summary>
+    public static string ImageAvif => "image/avif";
+
+    /// <summary>
+    /// Type
+    /// </summary>
     public static string ImageGif => "image/gif";
 
     /// <summary>

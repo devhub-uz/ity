@@ -297,10 +297,14 @@ public static class ApplicationBuilderExtensions
         application.UseStaticFiles(new StaticFileOptions { OnPrepareResponse = staticFileResponse });
 
         //images
+        var imagesContentTypeProvider = new FileExtensionContentTypeProvider();
+        imagesContentTypeProvider.Mappings[".avif"] = MimeTypes.ImageAvif;
+
         application.UseStaticFiles(new StaticFileOptions
         {
             FileProvider = new PhysicalFileProvider(fileProvider.GetLocalImagesPath(EngineContext.Current.Resolve<MediaSettings>())),
             RequestPath = new PathString("/images"),
+            ContentTypeProvider = imagesContentTypeProvider,
             OnPrepareResponse = staticFileResponse
         });
 
